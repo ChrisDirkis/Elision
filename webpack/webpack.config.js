@@ -29,7 +29,14 @@ module.exports = (env) => {
                     options: {
                         name: '[name].[ext]',
                     },
-                }
+                },
+                {
+                    test: /\.css$/,
+                    use: [
+                        'style-loader',
+                        'css-loader',
+                    ],
+                },
             ]
         },
 
