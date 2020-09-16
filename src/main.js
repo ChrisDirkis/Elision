@@ -104,15 +104,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const svg = d3.select("#main")
         .append("svg")  
-        .attr("width", width)
-        .attr("height", height)
-        .append("g")
-        .attr("transform", "translate(0, 0)");
+        .attr("viewBox", [0, 0, width, height]);
+        
+    const g = svg.append("g")
+        .attr("cursor", "grab");
 
-    console.log(svg);
+
 
     // Initialize the links
-    const link = svg
+    const link = g
         .selectAll("line")
         .data(graph.links)
         .enter()
@@ -120,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .style("stroke", "#aaa")
 
     // Initialize the nodes
-    const node = svg
+    const node = g
         .selectAll("circle")
         .data(graph.nodes)
         .enter()
@@ -138,6 +138,15 @@ document.addEventListener("DOMContentLoaded", () => {
         .force("center", d3.forceCenter(width / 2, height / 2))     // This force attracts nodes to the center of the svg area
         .on("tick", ticked);
 
+
+    svg.call(d3.zoom()
+        .extent([[0, 0], [width, height]])
+        .scaleExtent([1, 8])
+        .on("zoom", zoomed));
+
+    function zoomed({transform}) {
+        g.attr("transform", transform);
+    }
 
     // This function is run at each iteration of the force algorithm, updating the nodes position.
     function ticked() {
