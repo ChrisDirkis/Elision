@@ -105,15 +105,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const svg = d3.select("#main")
         .append("svg")  
         .attr("viewBox", [0, 0, width, height]);
-        
+    
+    // make the graph draggable (not the individual nodes)
     const g = svg.append("g")
         .attr("cursor", "grab");
-
-    // Initialize the links
-    const linkElements = updateLinks(g, graph.links);
-
-    // Initialize the nodes
-    const nodeElements = updateNodes(g, graph.nodes);
 
     // Let's list the force we wanna apply on the network
     const simulation = d3.forceSimulation(graph.nodes)              // Force algorithm is applied to data.nodes
@@ -123,14 +118,21 @@ document.addEventListener("DOMContentLoaded", () => {
         )
         .force("charge", d3.forceManyBody().strength(-400))         // This adds repulsion between nodes. Play with the -400 for the repulsion strength
         .force("center", d3.forceCenter(width / 2, height / 2))     // This force attracts nodes to the center of the svg area
-        .on("tick", ticked);
+        .on("tick", tick);
 
-    const update = () => {
-      simulation.nodes(graph.nodes)
+    const updateSimulation = (nodes) => {
+      simulation.nodes(nodes)
       //  .on("tick", ticked)
       
       simulation.force("link").links(graph.links)
     }
+
+    // Initialize the links
+    const linkElements = updateLinks(g, graph.links);
+
+    // Initialize the nodes
+    const nodeElements = updateNodes(g, graph.nodes, updateSimulation);
+
 
     svg.call(d3.zoom()
         .extent([[0, 0], [width, height]])
@@ -142,7 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // This function is run at each iteration of the force algorithm, updating the nodes position.
-    function ticked() {
+    function tick() {
         linkElements
             .attr("x1", function(d) { return d.source.x; })
             .attr("y1", function(d) { return d.source.y; })
@@ -158,7 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-const updateNodes = (g, nodes) => {
+const updateNodes = (g, nodes, updateSimulation) => {
   const u = g
       .selectAll("circle")
       .data(nodes);
@@ -167,6 +169,15 @@ const updateNodes = (g, nodes) => {
       .append("circle")
       .attr("r", 20)
       .style("fill", "#69b3a2")
+      .on("click", (e) => {
+        const node = e.target.__data__;
+        console.log(`Removing ${node.name}`)
+        nodes.splice(node.index, 1)
+        updateSimulation(nodes);
+        updateNodes(g, nodes, updateSimulation)
+        console.log(nodes)
+      });
+      
 
   u.exit()
       .remove();
@@ -188,3 +199,6 @@ const updateLinks = (g, links) => {
 
   return elements;
 }
+
+
+  fetch("./data.json").then(console.log)
