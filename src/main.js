@@ -109,35 +109,28 @@ document.addEventListener("DOMContentLoaded", () => {
     const g = svg.append("g")
         .attr("cursor", "grab");
 
-
-
     // Initialize the links
-    const link = g
-        .selectAll("line")
-        .data(graph.links)
-        .enter()
-        .append("line")
-        .style("stroke", "#aaa")
+    const linkElements = updateLinks(g, graph.links);
 
     // Initialize the nodes
-    const node = g
-        .selectAll("circle")
-        .data(graph.nodes)
-        .enter()
-        .append("circle")
-        .attr("r", 20)
-        .style("fill", "#69b3a2")
+    const nodeElements = updateNodes(g, graph.nodes);
 
     // Let's list the force we wanna apply on the network
-    const simulation = d3.forceSimulation(graph.nodes)                 // Force algorithm is applied to data.nodes
+    const simulation = d3.forceSimulation(graph.nodes)              // Force algorithm is applied to data.nodes
         .force("link", d3.forceLink()                               // This force provides links between nodes
-            .id(function(d) { return d.id; })                           // This provide  the id of a node
-            .links(graph.links)                                          // and this the list of links
+          .id(d => d.id)                                            // This provide  the id of a node
+          .links(graph.links)                                       // and this the list of links
         )
         .force("charge", d3.forceManyBody().strength(-400))         // This adds repulsion between nodes. Play with the -400 for the repulsion strength
         .force("center", d3.forceCenter(width / 2, height / 2))     // This force attracts nodes to the center of the svg area
         .on("tick", ticked);
 
+    const update = () => {
+      simulation.nodes(graph.nodes)
+      //  .on("tick", ticked)
+      
+      simulation.force("link").links(graph.links)
+    }
 
     svg.call(d3.zoom()
         .extent([[0, 0], [width, height]])
@@ -150,15 +143,48 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // This function is run at each iteration of the force algorithm, updating the nodes position.
     function ticked() {
-        link
+        linkElements
             .attr("x1", function(d) { return d.source.x; })
             .attr("y1", function(d) { return d.source.y; })
             .attr("x2", function(d) { return d.target.x; })
             .attr("y2", function(d) { return d.target.y; });
 
-        node
+        nodeElements
             .attr("cx", function (d) { return d.x+6; })
             .attr("cy", function(d) { return d.y-6; });
     }
 
 });
+
+
+
+const updateNodes = (g, nodes) => {
+  const u = g
+      .selectAll("circle")
+      .data(nodes);
+
+  const elements = u.enter()
+      .append("circle")
+      .attr("r", 20)
+      .style("fill", "#69b3a2")
+
+  u.exit()
+      .remove();
+
+  return elements;
+}
+
+const updateLinks = (g, links) => {
+  const u = g
+      .selectAll("line")
+      .data(links);
+
+  const elements = u.enter()
+      .append("line")
+      .style("stroke", "#aaa");
+
+  u.exit()
+      .remove();
+
+  return elements;
+}
